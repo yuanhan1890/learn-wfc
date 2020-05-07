@@ -1,4 +1,5 @@
-import { observable, action } from "mobx";
+import Tinycolor from "tinycolor2";
+import { observable, action, computed } from "mobx";
 import { Deferred } from "./utils/deferred";
 
 export class Store {
@@ -8,6 +9,12 @@ export class Store {
   @observable height = 0;
   @observable.shallow imagePixels = [] as Array<Array<number>>;
   @observable.shallow colors = [] as Array<[number, number, number, number]>;
+
+  @computed get colorFormats() {
+    return this.colors.map(([r,g,b,a]) => {
+      return new Tinycolor({ r, g, b, a});
+    });
+  }
 
   uploadImage(imageUrl: string) {
     const img = new Image();
@@ -66,6 +73,10 @@ export class Store {
     this.imagePixels = pixels;
     this.colors = colors;
   }
+
+  resolvePattern = (function *resolvePattern() {
+    yield null;
+  }).bind(this);
 }
 
 export const store = new Store();

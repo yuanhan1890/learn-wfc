@@ -6,6 +6,7 @@ import { store } from "@/store";
 
 const ImageContainer = styled.div`
   position: relative;
+  margin-bottom: 10px;
 `;
 
 const Pixel = styled.div`
