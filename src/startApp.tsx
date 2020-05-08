@@ -3,6 +3,8 @@ import * as React from "react";
 import styled from "styled-components";
 import { Image } from "@/components/image";
 import { Palette } from "@/components/palette";
+import { PatternPanel } from "./components/pattern";
+import "antd/dist/antd.css";
 
 const Layout = styled.div`
   display: flex;
@@ -23,6 +25,7 @@ export function start() {
       <Left>
         <Image />
         <Palette />
+        <PatternPanel />
       </Left>
       <Right>
 
