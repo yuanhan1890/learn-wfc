@@ -1,3 +1,5 @@
+import { random } from "./utils";
+
 export abstract class Model
 {
     wave = [] as boolean[][];
@@ -84,7 +86,7 @@ export abstract class Model
             const entropy = this.entropies[i];
             if (amount > 1 && entropy <= min)
             {
-                const noise = 1E-6 * Math.random();
+                const noise = 1E-6 * random();
                 if (entropy + noise < min)
                 {
                     min = entropy + noise;
@@ -103,11 +105,11 @@ export abstract class Model
             return true;
         }
 
-        const distribution = Array.from({ length: this.T });
+        const distribution = Array.from({ length: this.T }) as number[];
         for (let t = 0; t < this.T; t++) {
           distribution[t] = this.wave[argmin][t] ? this.weights[t] : 0;
         }
-        const r = distribution[Math.floor(Math.random() * distribution.length)];
+        const r = this.random(distribution, random());
 
         const w = this.wave[argmin];
         for (let t = 0; t < this.T; t++) if (w[t] != (t == r)) this.ban(argmin, t);
@@ -201,5 +203,23 @@ export abstract class Model
             this.sumsOfWeightLogWeights[i] = this.sumOfWeightLogWeights;
             this.entropies[i] = this.startingEntropy;
         }
+    }
+
+    random(a: number[], r: number)
+    {
+        const sum = a.reduce((s, i) => s + i, 0);
+        for (let j = 0; j < a.length; j++) a[j] /= sum;
+
+        let i = 0;
+        let x = 0;
+
+        while (i < a.length)
+        {
+            x += a[i];
+            if (r <= x) return i;
+            i++;
+        }
+
+        return 0;
     }
 }
