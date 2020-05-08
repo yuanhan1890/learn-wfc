@@ -67,7 +67,6 @@ export class Store {
     const ordering = [] as Array<number>;
     const patterns = [] as Array<number[]>;
     const weightsTemp = [] as { [key in number]: number };
-    let logCount = 0;
     for (let y = 0; y < maxY; y += 1) {
       for (let x = 0; x < maxX; x += 1) {
         const ps = Array.from({ length: 8 }) as Array<number[]>;
@@ -86,13 +85,6 @@ export class Store {
         for (let i = 0; i < this.symmetry; i += 1) {
           const p = ps[i];
           const idx = this.patternToIndex(p);
-          if (logCount < 200) {
-            console.log(idx);
-          }
-          if (idx === 30) {
-            console.log(x, y, p);
-          }
-          logCount += 1;
           if (weightsTemp[idx] === undefined) {
             weightsTemp[idx] = 0;
             patterns.push(p);
@@ -246,9 +238,216 @@ export class Store {
     this.colors = colors;
   }
 
-  @action
-  generate = function  *generate(this: Store) {
+  @computed private get generateCaculate() {
+    const len = this.patterns.length;
+    const weightLogWeights = [] as number[];
+    let sumOfWeights = 0;
+    let sumOfWeightLogWeights = 0;
+    for (let i = 0; i < len; i += 1) {
+      weightLogWeights[i] = this.weights[i] * Math.log(this.weights[i]);
+      sumOfWeights += this.weights[i];
+      sumOfWeightLogWeights += weightLogWeights[i];
+    }
+
+    return { weightLogWeights, sumOfWeights, sumOfWeightLogWeights };
+  }
+
+  @computed get weightLogWeights() {
+    return this.generateCaculate.weightLogWeights;
+  }
+
+  @computed get sumOfWeights() {
+    return this.generateCaculate.sumOfWeights;
+  }
+
+  @computed get sumOfWeightLogWeights() {
+    return this.generateCaculate.sumOfWeightLogWeights;
+  }
+
+  @computed get startingEntropy() {
+    return Math.log(this.sumOfWeights) - this.sumOfWeightLogWeights / this.sumOfWeights;
+  }
+
+  @computed get outputSize() {
+    return this.outputWidth * this.outputHeight;
+  }
+
+  generate = function *generate(this: Store) {
     yield null;
+  }
+
+  run = () => {
+    this.init();
+    this.clear();
+
+    while (true)
+    {
+        const result = this.observe();
+        if (result != null) return result;
+        this.propagate();
+    }
+  }
+
+  wave = [] as boolean[][];
+  compatible = [] as Array<[number, number, number, number][]>;
+  sumsOfOnes = [] as number[];
+  sumsOfWeights = [] as number[];
+  sumsOfWeightLogWeights = [] as number[];
+  entropies = [] as number[];
+  stack = [] as Array<[number, number]>
+  stacksize = 0;
+  observed = [] as number[];
+
+  init = () => {
+    this.wave = Array.from({ length: this.outputSize }).map(() => {
+      return Array.from({ length: this.patternSize });
+    });
+    this.compatible = Array.from({ length: this.outputSize }).map(() => {
+      return Array.from({ length: this.patternSize });
+    });;
+    this.sumsOfOnes = Array.from({ length: this.outputSize }); 
+    this.sumsOfWeights = Array.from({ length: this.outputSize });
+    this.sumsOfWeightLogWeights = Array.from({ length: this.outputSize });
+    this.entropies = Array.from({ length: this.outputSize });
+    this.stack = Array.from({ length: this.outputSize * this.patternSize });
+    this.stacksize = 0;
+
+    for (let i = 0; i < this.outputSize; i += 1) {
+      for (let t = 0; t < this.patternSize; t += 1) {
+        this.wave[i][t] = false;
+        this.compatible[i][t] = [0, 0, 0, 0];
+      }
+    }
+  }
+
+  clear = () => {
+    const weightsLength = this.weights.length;
+    const sumOfWeights = this.sumOfWeights;
+    const sumOfWeightLogWeights = this.sumOfWeightLogWeights;
+    const startingEntropy = this.startingEntropy;
+    const propagator = this.propagator;
+
+    for (let i = 0; i < this.outputSize; i += 1) {
+      for (let t = 0; t < this.patternSize; t += 1) {
+        this.wave[i][t] = true;
+        for (let d = 0; d < 4; d += 1) {
+          this.compatible[i][t][d] = propagator[this.opposite[d]][t].length;
+        }
+      }
+
+      this.sumsOfOnes[i] = weightsLength;
+      this.sumsOfWeights[i] = sumOfWeights;
+      this.sumsOfWeightLogWeights[i] = sumOfWeightLogWeights;
+      this.entropies[i] = startingEntropy;
+    }
+  }
+
+  observe = () => {
+    let minEntropy = 1000;
+    let argmin = -1;
+
+    for (let i = 0; i < this.outputSize; i += 1) {
+      if (this.onBoundary(i % this.outputWidth, Math.floor(i / this.outputWidth))) {
+        continue;
+      }
+
+      const amount = this.sumsOfOnes[i];
+      if (amount === 0) {
+        return false;
+      }
+
+      const entropy = this.entropies[i];
+      if (amount > 1 && entropy < minEntropy) {
+        const noise = Math.random() * 1e-6;
+        if (entropy + noise < minEntropy) {
+          minEntropy = entropy + noise;
+          argmin = i;
+        }
+      }
+    }
+
+    if (argmin == -1) {
+      this.observed = Array.from({ length: this.outputSize });
+      for (let i = 0; i < this.outputSize; i += 1) {
+        for (let t = 0; t < this.patternSize; t += 1) {
+          if (this.wave[i][t]) {
+            this.observed[i] = t;
+            break;
+          }
+        }
+      }
+
+      return true;
+    }
+
+    const distribution = Array.from({ length: this.outputSize }) as number[];
+    for (let t = 0; t < this.patternSize; t += 1) {
+      distribution[t] = this.wave[argmin][t] ? this.weights[t] : 0;
+    }
+
+    const r = distribution[Math.floor(Math.random() * distribution.length)];
+    const w = this.wave[argmin];
+    for (let t = 0; t < this.patternSize; t += 1) {
+      if (w[t] !== (t === r)) {
+        this.ban(argmin, t);
+      }
+    }
+
+    return null;
+  }
+
+  private ban(i: number, t: number) {
+    this.wave[i][t] = false;
+
+    const comp = this.compatible[i][t];
+    for (let d = 0; d < 4; d++) comp[d] = 0;
+    this.stack[this.stacksize] = [i, t];
+    this.stacksize++;
+
+    this.sumsOfOnes[i] -= 1;
+    this.sumsOfWeights[i] -= this.weights[t];
+    this.sumsOfWeightLogWeights[i] -= this.weightLogWeights[t];
+
+    const sum = this.sumsOfWeights[i];
+    this.entropies[i] = Math.log(sum) - this.sumsOfWeightLogWeights[i] / sum;
+  }
+
+  private propagate() {
+    while (this.stacksize > 0) {
+      const e1 = this.stack[this.stacksize - 1];
+      this.stacksize--;
+
+      const i1 = e1[0];
+      const x1 = i1 % this.outputWidth, y1 = Math.floor(i1 / this.outputWidth);
+
+      for (let d = 0; d < 4; d++) {
+        const dx = this.DX[d], dy = this.DY[d];
+        let x2 = x1 + dx, y2 = y1 + dy;
+        if (this.onBoundary(x2, y2)) continue;
+
+        if (x2 < 0) x2 += this.outputWidth;
+        else if (x2 >= this.outputWidth) x2 -= this.outputWidth;
+        if (y2 < 0) y2 += this.outputHeight;
+        else if (y2 >= this.outputHeight) y2 -= this.outputHeight;
+
+        const i2 = x2 + y2 * this.outputWidth;
+        const p = this.propagator[d][e1[1]];
+        const compat = this.compatible[i2];
+
+        for (let l = 0; l < p.length; l++)
+        {
+            const t2 = p[l];
+            const comp = compat[t2];
+
+            comp[d]--;
+            if (comp[d] == 0) this.ban(i2, t2);
+        }
+      }
+    }
+  }
+
+  onBoundary(x: number, y: number) {
+    return !this.periodic && (x + this.size > this.width || y + this.size > this.height || x < 0 || y < 0);
   }
 }
 

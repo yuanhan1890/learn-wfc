@@ -8,7 +8,8 @@ import "antd/dist/antd.css";
 import { OutputImage } from "./components/outputImage";
 
 const Layout = styled.div`
-  display: flex;
+  display: none;
+  /* display: flex; */
   width: 100%;
   height: 100%;
 `;
