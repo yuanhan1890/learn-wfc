@@ -5,6 +5,7 @@ import { Image } from "@/components/image";
 import { Palette } from "@/components/palette";
 import { PatternPanel } from "./components/pattern";
 import "antd/dist/antd.css";
+import { OutputImage } from "./components/outputImage";
 
 const Layout = styled.div`
   display: flex;
@@ -28,7 +29,7 @@ export function start() {
         <PatternPanel />
       </Left>
       <Right>
-
+        <OutputImage />
       </Right>
     </Layout>
   ), document.getElementById("app"));

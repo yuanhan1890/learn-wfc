@@ -17,6 +17,9 @@ export class Store {
   @observable symmetry = 2;
   @observable periodic = true;
 
+  @observable outputWidth = 48;
+  @observable outputHeight = 48;
+
   @computed get colorFormats() {
     return this.colors.map(([r,g,b,a]) => {
       return new Tinycolor({ r, g, b, a});
@@ -123,6 +126,7 @@ export class Store {
 
   @computed get propagator() {
     const propagator = [] as number[][][];
+    // left, top, right, bottom
     for (let d = 0; d < 4; d += 1) {
       propagator[d] = [];
       for (let i = 0; i < this.patternSize; i += 1) {
@@ -240,6 +244,11 @@ export class Store {
     }
     this.imagePixels = pixels;
     this.colors = colors;
+  }
+
+  @action
+  generate = function  *generate(this: Store) {
+    yield null;
   }
 }
 
