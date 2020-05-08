@@ -1,7 +1,7 @@
 import { create as CreateSeed } from "random-seed";
 
 const randomContainer = {
-  random: CreateSeed("ilovedxx"),
+  random: CreateSeed("1"),
 };
 
 export function next(key: string) {

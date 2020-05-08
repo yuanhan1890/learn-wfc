@@ -112,7 +112,11 @@ export abstract class Model
         const r = this.random(distribution, random());
 
         const w = this.wave[argmin];
-        for (let t = 0; t < this.T; t++) if (w[t] != (t == r)) this.ban(argmin, t);
+        for (let t = 0; t < this.T; t++) {
+          if (w[t] != (t == r)) {
+            this.ban(argmin, t);
+          }
+        }
 
         return null;
     }
