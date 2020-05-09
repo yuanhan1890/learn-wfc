@@ -2,11 +2,11 @@ import { OverlappingModel } from "./overlappingModel";
 
 export function main() {
   // <overlapping name="Skyline" N="3" symmetry="2" ground="-1" periodic="True"/>
-  const model = new OverlappingModel("Skyline", 3, 48, 48, true, true, 2, -1);
+  // const model = new OverlappingModel("Skyline", 3, 48, 48, true, true, 2, -1);
   // <overlapping name="Chess" N="2" periodic="True"/>
   // if (xelem.Name == "overlapping") model = new OverlappingModel(name, xelem.Get("N", 2), xelem.Get("width", 48), xelem.Get("height", 48),
   // xelem.Get("periodicInput", true), xelem.Get("periodic", false), xelem.Get("symmetry", 8), xelem.Get("ground", 0));
-  // const model = new OverlappingModel("Skyline", 2, 48, 48, true, true, 8, 0);
+  const model = new OverlappingModel("Chess", 2, 48, 48, true, true, 8, 0);
   model.ready.promise.then(() => {
     const result = model.run(0);
 
