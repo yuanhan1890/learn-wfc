@@ -1,3 +1,6 @@
+import { observable } from "mobx";
+import { Solver } from "./solver";
+
 export interface ITile {
   url: string;
   name: string;
@@ -5,8 +8,11 @@ export interface ITile {
   rotate?: number;
 }
 
-export class WaveStore {
+export class WaveStore extends Solver {
+  periodic = false;
   tileSize = 7;
+
+  @observable.shallow result = null as number[] | null;
 
   inputTiles: Array<{ url: string; symmetry: "I" | "L" | "X" | "T" }> = [
     { url: "/samples/castle/bridge.png", symmetry: "I" },
@@ -87,6 +93,7 @@ export class WaveStore {
   propagator: number[][][];
 
   constructor() {
+    super(10, 10);
     this.tiles = [];
     this.tileNames = {} as { [key in string]: number };
     for (let i = 0; i < this.inputTiles.length; i += 1) {
@@ -123,6 +130,9 @@ export class WaveStore {
         this.tiles.push({ url: tile.url, name: n });
       }
     }
+
+    this.T = this.tiles.length;
+    this.weights = Array.from({ length: this.T }).map(() => 1);
 
     this.propagator = [
       [
@@ -250,6 +260,17 @@ export class WaveStore {
         [1, 9, 13, 14, 15, 16, 18, ],
       ]
     ];
+  }
+
+  onBoundary(x: number, y: number) {
+    return !this.periodic && (x < 0 || y < 0 || x >= this.FMX || y >= this.FMY);
+  }
+
+  setup() {
+    const result = this.run(0);
+    if (result) {
+      this.result = this.observed.slice();
+    }
   }
 }
 
