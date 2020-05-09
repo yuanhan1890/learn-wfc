@@ -1,5 +1,6 @@
 import { observable } from "mobx";
 import { Solver } from "./solver";
+import { next } from "./utils";
 
 export interface ITile {
   url: string;
@@ -266,7 +267,10 @@ export class WaveStore extends Solver {
     return !this.periodic && (x < 0 || y < 0 || x >= this.FMX || y >= this.FMY);
   }
 
+  randomkey = 0;
+
   setup() {
+    next(`${this.randomkey++}`);
     const result = this.run(0);
     if (result) {
       this.result = this.observed.slice();
