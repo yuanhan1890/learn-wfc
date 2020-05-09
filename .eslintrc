@@ -29,6 +29,7 @@
     "no-shadow": 2,
     "semi": 1,
     "import/default": 0,
+    "@typescript-eslint/interface-name-prefix": 0,
     "@typescript-eslint/no-non-null-assertion": 0,
     "@typescript-eslint/indent": 0,
     "@typescript-eslint/no-explicit-any": 0,

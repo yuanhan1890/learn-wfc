@@ -1,37 +1,27 @@
-import * as ReactDOM from "react-dom";
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import styled from "styled-components";
-import { Image } from "@/components/image";
-import { Palette } from "@/components/palette";
-import { PatternPanel } from "./components/pattern";
-import "antd/dist/antd.css";
-import { OutputImage } from "./components/outputImage";
+import { Tiles } from "./components/Tiles";
+import { Rules } from "./components/rules";
+import { Solver } from "./components/solver";
+import { Operations } from "./components/operations";
 
-const Layout = styled.div`
-  display: none;
-  /* display: flex; */
-  width: 100%;
-  height: 100%;
-`;
-const Left = styled.div`
-  border-right: 1px solid black;
-  max-height: 100%;
-  overflow: auto;
-`;
-const Right = styled.div`
+const Container = styled.div`
 `;
 
-export function start() {
+function App() {
+  return (
+    <Container>
+      <Tiles />
+      <Rules />
+      <Operations />
+      <Solver />
+    </Container>
+  );
+}
+
+export function main() {
   ReactDOM.render((
-    <Layout>
-      <Left>
-        <Image />
-        <Palette />
-        <PatternPanel />
-      </Left>
-      <Right>
-        <OutputImage />
-      </Right>
-    </Layout>
+    <App />
   ), document.getElementById("app"));
 }
